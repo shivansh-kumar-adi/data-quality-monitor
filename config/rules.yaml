@@ -1,0 +1,78 @@
+# Data Quality Monitor - rules configuration
+#
+# Add or change a rule here; no Python change needed.
+#
+# Every rule has:
+#   name      unique name (shown in the dashboard)
+#   type      which check to run (see src/rules.py)
+#   column    column to check (or `columns:` list for `required`)
+#   severity  high | medium | low   (default: medium)
+#   message   optional custom text shown with each issue
+# plus type-specific options.
+#
+# Each type belongs to one quality dimension:
+#   completeness : required
+#   validity     : regex, date_format, not_future, range, allowed_values
+#   uniqueness   : unique_key, exact_duplicates
+
+# How much each dimension counts toward the overall score. Any positive numbers;
+# they are normalised, so they do not have to add up to 1.
+weights:
+  completeness: 0.4
+  validity: 0.4
+  uniqueness: 0.2
+
+rules:
+  # --- Completeness: value must not be empty ---
+  - name: required_fields
+    type: required
+    columns: [name, email, signup_date]
+    severity: high
+
+  # --- Validity: if a value is present, it must look right ---
+  - name: email_format
+    type: regex
+    column: email
+    pattern: '[^@\s]+@[^@\s]+\.[^@\s]+'     # must match the WHOLE value
+    severity: medium
+
+  - name: phone_format
+    type: regex
+    column: phone
+    pattern: '[6-9]\d{9}'                    # 10-digit Indian mobile
+    severity: medium
+
+  - name: signup_date_format
+    type: date_format
+    column: signup_date
+    format: '%Y-%m-%d'
+    severity: medium
+
+  - name: signup_date_not_future
+    type: not_future
+    column: signup_date
+    format: '%Y-%m-%d'
+    severity: high
+
+  - name: age_range
+    type: range
+    column: age
+    min: 18
+    max: 80
+    severity: medium
+
+  - name: country_allowed
+    type: allowed_values
+    column: country
+    values: [IN, US, UK, DE, SG]
+    severity: low
+
+  # --- Uniqueness ---
+  - name: customer_id_unique
+    type: unique_key
+    column: customer_id
+    severity: high
+
+  - name: exact_duplicate_rows
+    type: exact_duplicates
+    severity: medium
